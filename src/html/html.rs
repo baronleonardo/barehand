@@ -24,7 +24,7 @@ impl<'a> Html <'a>
             .skip_while(|line| line.is_empty() || line.starts_with("!"))
             .collect();
 
-        return res
+        res
     }
 
     fn build_tree(html_splitted: &Vec<&'a str>) -> Html<'a>
