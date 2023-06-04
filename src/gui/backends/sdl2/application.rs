@@ -1,11 +1,11 @@
 use std::time::Duration;
 
-use sdl2::event::Event;
-
-pub use crate::gui::backends::GenericApplication;
-pub use crate::gui::backends::GenericWindow;
+use sdl2::{event::Event};
 
 use super::Window;
+
+// pub use crate::gui::backends::GenericApplication;
+// pub use crate::gui::backends::GenericWindow;
 
 pub struct Application<'a>
 {
@@ -15,11 +15,9 @@ pub struct Application<'a>
     pub windows: Vec<&'a mut super::Window<'a>>,
 }
 
-impl<'a> GenericApplication<'a> for Application<'a>
+impl<'a> Application<'a>
 {
-    // type WindowType = Window;
-
-    fn new() -> Result<Application<'a>, String>
+    pub fn new() -> Result<Application<'a>, String>
     {
         let sdl_context = sdl2::init().unwrap();
         let event_pump = sdl_context.event_pump()?;
@@ -33,12 +31,12 @@ impl<'a> GenericApplication<'a> for Application<'a>
         })
     }
 
-    fn draw_window<W: GenericWindow<'a>>(&mut self, window: &'a mut W)
+    pub fn draw_window(&mut self, window: &'a mut Window<'a>)
     {
-        self.windows.push(unsafe { std::mem::transmute(window) });
+        self.windows.push(window);
     }
 
-    fn main_loop(&mut self)
+    pub fn main_loop(&mut self)
     {
         // self.canvas.clear();
         // self.canvas.present();

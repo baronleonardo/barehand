@@ -1,8 +1,8 @@
-use crate::gui::{widget::Rect, backends::GenericWidget};
+use crate::gui::Rect;
 
 use super::Button;
 
-impl Into<sdl2::rect::Rect> for &super::super::Rect
+impl Into<sdl2::rect::Rect> for &Rect
 {
     fn into(self) -> sdl2::rect::Rect {
         sdl2::rect::Rect::new(
@@ -14,13 +14,13 @@ impl Into<sdl2::rect::Rect> for &super::super::Rect
     }
 }
 
-pub enum WidgetType
+pub enum WidgetType<'a>
 {
-    Raw(Widget),
-    Button(Button),
+    Raw(&'a Widget),
+    Button(&'a Button),
 }
 
-impl WidgetType
+impl<'a> WidgetType<'a>
 {
     pub fn raw(&self) -> &Vec<Rect>
     {
@@ -46,14 +46,14 @@ impl Widget
     }
 }
 
-impl<'a> GenericWidget<'a> for Widget
+impl<'a> Widget
 {
-    fn raw(&self) -> &Widget
+    pub fn raw(&self) -> &Widget
     {
         &self
     }
 
-    fn from_raw(raw: Widget) -> Self where Self: Sized {
+    pub fn from_raw(raw: Widget) -> Self where Self: Sized {
         raw
     }
 }
