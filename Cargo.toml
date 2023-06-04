@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 regex = "1.8"
+sdl2 = { version = "0.35", features = [ "ttf", "image" ] }
+bitflags = "2.3"

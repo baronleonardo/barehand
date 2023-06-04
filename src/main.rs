@@ -1,16 +1,23 @@
+use barehand::gui::application::{Application, SdlApplication};
+use barehand::gui::button::Button;
+use barehand::gui::widget::Widget;
 use barehand::html::Html;
-
-// #[derive(Debug)]
-// struct Tag<'a> {
-//     data: &'a str,
-//     parent: usize,
-//     children: Vec<usize>,
-// }
+use barehand::gui::{Sdl, window::{Window, SdlWindow, WindowSize, WindowFlags}};
 
 fn main() {
     let html = std::fs::read_to_string("src/index.html").unwrap();
     let html = Html::new(&html);
     html.print_tree();
+
+    let mut app = Application::<Sdl>::new().unwrap();
+    let mut window = Window::<Sdl>::new(&app, "test", WindowSize(800, 600), WindowFlags::Default);
+
+    let widget = Button::<Sdl>::new("button".into(), (10, 10).into(), (255, 0, 0).into());
+    window.add_widget(&widget);
+
+    app.draw_window(&mut window);
+    app.main_loop();
+
 
     // let (head, body) = prepare(&html);
     // println!("{:?}", head);
