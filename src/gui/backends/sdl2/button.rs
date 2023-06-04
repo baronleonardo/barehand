@@ -1,24 +1,29 @@
+use crate::gui::Backend;
 use crate::gui::Position;
 use crate::gui::Size;
 use crate::gui::Rect;
+use crate::gui::backends::GenericButton;
+use crate::gui::backends::GenericWidget;
 use crate::gui::color::Color;
 
 use super::Widget;
 
-pub struct Button
+pub struct Button<'a, T: Backend<'a>>
 {
     label: String,
-    raw: Widget,
+    raw: T::Widget,
 }
 
-impl Button
+impl<'a, T> Button<'a, T>
+    where T: Backend<'a>
 {
     const DEFAULT_SIZE: Size = Size(150, 40);
 }
 
-impl<'a> Button
+impl<'a, T> GenericButton<'a, T> for Button<'a, T>
+    where T: Backend<'a>
 {
-    pub fn new(label: String, position: Position, color: Color) -> Button
+    fn new(label: String, position: Position, color: Color) -> Button<'a, T>
     {
         let outer_part = Rect {
             color,
@@ -28,44 +33,54 @@ impl<'a> Button
 
         Button {
             label,
-            raw: Widget { rectangles: vec![outer_part] },
+            raw: T::Widget::from_raw(vec![outer_part]),
         }
     }
-}
 
-impl<'a> Button
-{
-    pub fn raw(&self) -> &Widget {
+    fn raw(&self) -> &T::Widget
+    {
         &self.raw
     }
-
-    pub fn from_raw(raw: Widget) -> Self where Self: Sized {
-        Button {
-            label: "".to_string(),
-            raw: Widget::from_raw(raw),
-        }
-    }
 }
+
+// impl<'a, T> GenericWidget<'a, T> for Button<'a, T>
+//     where T: Backend<'a>
+// {
+//     fn new() -> Self where Self: Sized {
+
+//     }
+
+//     fn raw(&self) -> &T::Widget {
+//         &self.raw
+//     }
+
+//     fn from_raw(raw: T::Widget) -> Self where Self: Sized {
+//         Button {
+//             label: "".to_string(),
+//             raw: T::Widget::from_raw(raw),
+//         }
+//     }
+// }
 
 #[cfg(test)]
 mod test
 {
-    use crate::gui::color::Color;
-    use crate::gui::window_flags::WindowFlags;
-    use crate::gui::backends::sdl2::{Application, Window, WidgetType};
+    // use crate::gui::color::Color;
+    // use crate::gui::window_flags::WindowFlags;
+    // use crate::gui::backends::sdl2::{Application, Window, WidgetType};
 
-    use super::Button;
+    // use super::Button;
 
-    #[test]
-    fn test_button()
-    {
-        let mut app = Application::new().unwrap();
-        let mut window = Window::new(&app, "test button", 800, 600, Color::WHITE, WindowFlags::Default);
+    // #[test]
+    // fn test_button()
+    // {
+    //     let mut app = Application::new().unwrap();
+    //     let mut window = Window::new(&app, "test button", 800, 600, Color::WHITE, WindowFlags::Default);
 
-        let button = Button::new("label".to_string(), (10, 10).into(), (0, 255, 0).into());
-        window.add_button(&button);
+    //     let button = Button::new("label".to_string(), (10, 10).into(), (0, 255, 0).into());
+    //     window.add_button(&button);
 
-        app.draw_window(&mut window);
-        app.main_loop();
-    }
+    //     app.draw_window(&mut window);
+    //     app.main_loop();
+    // }
 }

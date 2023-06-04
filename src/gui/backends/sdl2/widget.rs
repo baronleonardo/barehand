@@ -1,4 +1,4 @@
-use crate::gui::Rect;
+use crate::gui::{Rect, Backend, backends::{GenericWidget, GenericButton}};
 
 use super::Button;
 
@@ -14,20 +14,22 @@ impl Into<sdl2::rect::Rect> for &Rect
     }
 }
 
-pub enum WidgetType<'a>
+pub enum WidgetType<'a, T>
+    where T: Backend<'a>
 {
-    Raw(&'a Widget),
-    Button(&'a Button),
+    Raw(&'a T::Widget),
+    Button(&'a T::Button),
 }
 
-impl<'a> WidgetType<'a>
+impl<'a, T> WidgetType<'a, T>
+    where T: Backend<'a>
 {
     pub fn raw(&self) -> &Vec<Rect>
     {
         match self
         {
-            WidgetType::Raw(wtype) => &wtype.rectangles,
-            WidgetType::Button(wtype) => &wtype.raw().rectangles,
+            WidgetType::Raw(wtype) => &(unsafe { std::mem::transmute::<&&<T as Backend<'_>>::Widget, &Widget>(wtype) }).rectangles,
+            WidgetType::Button(wtype) => &(unsafe { std::mem::transmute::<&<T as Backend<'_>>::Widget, &Widget>(wtype.raw()) }).rectangles,
         }
     }
 }
@@ -46,14 +48,31 @@ impl Widget
     }
 }
 
-impl<'a> Widget
+impl<'a> GenericWidget<'a> for Widget
+{
+    fn new() -> Self where Self: Sized
+    {
+        Self { rectangles: vec![] }
+    }
+
+    fn raw(&self) -> &Vec<Rect>
+    {
+        &self.rectangles
+    }
+
+    fn from_raw(raw: Vec<Rect>) -> Self where Self: Sized {
+        Self { rectangles: raw }
+    }
+}
+
+impl Widget
 {
     pub fn raw(&self) -> &Widget
     {
         &self
     }
 
-    pub fn from_raw(raw: Widget) -> Self where Self: Sized {
-        raw
+    pub fn from_raw(raw: Vec<Rect>) -> Self where Self: Sized {
+        Self { rectangles: raw }
     }
 }

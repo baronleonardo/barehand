@@ -1,19 +1,25 @@
 use sdl2::render::Canvas;
 
+use crate::gui::Backend;
 use crate::gui::window_flags::WindowFlags;
 use crate::gui::color::{self, Color};
 
-use super::{Application, Button};
+use super::Application;
+use super::application::GenericWindow;
 use super::widget::WidgetType;
 
-pub struct Window<'a>
+use std::marker::PhantomData;
+
+pub struct Window<'a, T: Backend<'a>>
 {
     canvas: Canvas<sdl2::video::Window>,
     background_color: Color,
-    widgets: Vec<WidgetType<'a>>,
+    widgets: Vec<WidgetType<'a, T>>,
+    phantom: PhantomData<&'a T>,
 }
 
-impl<'a> PartialEq for Window<'a>
+impl<'a, T> PartialEq for Window<'a, T>
+    where T: Backend<'a>
 {
     fn eq(&self, other: &Self) -> bool {
         if self.canvas.info() == other.canvas.info()
@@ -27,11 +33,15 @@ impl<'a> PartialEq for Window<'a>
     }
 }
 
-impl<'a> Window<'a>
+impl<'a, T> GenericWindow<'a, T> for Window<'a, T>
+    where T: Backend<'a>
 {
-    pub fn new(app: &Application, title: &str, width: u32, height: u32, background_color: color::Color, flags: WindowFlags) -> Window<'a>
+    fn new(app: &T::Application, title: &str, width: u32, height: u32, background_color: color::Color, flags: WindowFlags) -> Window<'a, T>
     {
-        let mut window_builder = app.video_subsystem.window(title, width, height);
+        let mut window_builder =
+            (unsafe { std::mem::transmute::<&T::Application, &Application<T>>(app) })
+            .video_subsystem
+            .window(title, width, height);
 
         Self::init_window_flags(flags, &mut window_builder);
 
@@ -45,10 +55,10 @@ impl<'a> Window<'a>
             .unwrap();
         canvas.set_draw_color(background_color.rgba());
 
-        Window { canvas, background_color, widgets: vec![] }
+        Window { canvas, background_color, widgets: vec![], phantom: PhantomData }
     }
 
-    pub fn set_fullscreen(&mut self, fullscreen: bool)
+    fn set_fullscreen(&mut self, fullscreen: bool)
     {
         self.canvas.window_mut().set_fullscreen(
             if fullscreen { sdl2::video::FullscreenType::True } else { sdl2::video::FullscreenType::Off }
@@ -56,12 +66,12 @@ impl<'a> Window<'a>
         .map_err(|e| eprintln!("Error: {e}"));
     }
 
-    pub fn set_bordered(&mut self, bordered: bool)
+    fn set_bordered(&mut self, bordered: bool)
     {
         self.canvas.window_mut().set_bordered(bordered);
     }
 
-    pub fn set_position(&mut self, x: u32, y: u32)
+    fn set_position(&mut self, x: u32, y: u32)
     {
         use sdl2::video::WindowPos;
         self.canvas.window_mut().set_position(
@@ -70,13 +80,13 @@ impl<'a> Window<'a>
         );
     }
 
-    pub fn set_size(&mut self, width: u32, height: u32)
+    fn set_size(&mut self, width: u32, height: u32)
     {
         self.canvas.window_mut().set_size(width, height)
         .map_err(|e| eprintln!("Error: {e}"));
     }
 
-    pub fn set_opacity(&mut self, opacity: f32)
+    fn set_opacity(&mut self, opacity: f32)
     {
         self.canvas
             .window_mut()
@@ -84,7 +94,7 @@ impl<'a> Window<'a>
             .map_err(|e| eprintln!("Error: {e}"));
     }
 
-    pub fn set_title(&mut self, new_title: &str)
+    fn set_title(&mut self, new_title: &str)
     {
         self.canvas
             .window_mut()
@@ -92,17 +102,18 @@ impl<'a> Window<'a>
             .map_err(|e| eprintln!("Error: {e}"));
     }
 
-    pub fn add_widget(&mut self, widget_type: WidgetType<'a>)
+    fn add_widget(&mut self, widget_type: &'a T::Widget )
     {
-        self.widgets.push(widget_type);
+        // TODO: this is wrong for now
+        // self.widgets.push(WidgetType::Raw(widget_type));
     }
 
-    pub fn add_button(&mut self, button: &'a Button)
+    fn add_button(&mut self, button: &'a T::Button)
     {
         self.widgets.push(WidgetType::Button(button));
     }
 
-    pub fn draw(&mut self)
+    fn draw(&mut self)
     {
         self.canvas.set_draw_color(self.background_color.rgb());
         self.canvas.clear();
@@ -120,7 +131,8 @@ impl<'a> Window<'a>
     }
 }
 
-impl<'a> Window<'a>
+impl<'a, T> Window<'a, T>
+    where T: Backend<'a>
 {
     fn init_window_flags(flags: WindowFlags, window_builder: &mut sdl2::video::WindowBuilder)
     {
@@ -159,8 +171,8 @@ mod test
 {
     // use crate::gui::{window::WindowFlags, color};
 
-    use super::Window;
-    use super::Application;
+    // use super::Window;
+    // use super::Application;
 
     #[test]
     fn test_run()
