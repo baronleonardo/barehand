@@ -1,23 +1,23 @@
 use std::time::Duration;
 
-use sdl2::event::Event;
+use sdl2::{event::Event};
 
-use crate::gui::Backend;
-pub use crate::gui::backends::GenericApplication;
-pub use crate::gui::backends::GenericWindow;
+use super::Window;
 
-pub struct Application<'a, T: Backend<'a>>
+// pub use crate::gui::backends::GenericApplication;
+// pub use crate::gui::backends::GenericWindow;
+
+pub struct Application<'a>
 {
     pub sdl_context: sdl2::Sdl,
     pub video_subsystem: sdl2::VideoSubsystem,
     pub event_pump: sdl2::EventPump,
-    pub windows: Vec<&'a mut T::Window>,
+    pub windows: Vec<&'a mut super::Window<'a>>,
 }
 
-impl<'a, T> GenericApplication<'a, T> for Application<'a, T>
-    where T: Backend<'a>
+impl<'a> Application<'a>
 {
-    fn new() -> Result<Application<'a, T>, String>
+    pub fn new() -> Result<Application<'a>, String>
     {
         let sdl_context = sdl2::init().unwrap();
         let event_pump = sdl_context.event_pump()?;
@@ -31,12 +31,12 @@ impl<'a, T> GenericApplication<'a, T> for Application<'a, T>
         })
     }
 
-    fn draw_window(&mut self, window: &'a mut T::Window)
+    pub fn draw_window(&mut self, window: &'a mut Window<'a>)
     {
         self.windows.push(window);
     }
 
-    fn main_loop(&mut self)
+    pub fn main_loop(&mut self)
     {
         // self.canvas.clear();
         // self.canvas.present();
