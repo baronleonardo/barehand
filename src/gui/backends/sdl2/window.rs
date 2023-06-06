@@ -1,4 +1,5 @@
-use sdl2::render::Canvas;
+use sdl2::render::{Canvas, TextureCreator, Texture};
+use sdl2::video::WindowContext;
 
 use crate::gui::window_flags::WindowFlags;
 use crate::gui::color::{self, Color};
@@ -9,8 +10,9 @@ use super::widget::WidgetType;
 pub struct Window<'a>
 {
     canvas: Canvas<sdl2::video::Window>,
+    texture_creator: TextureCreator<WindowContext>,
     background_color: Color,
-    widgets: Vec<WidgetType<'a>>,
+    widgets: Vec<(WidgetType<'a>, Vec<&'a Texture<'a>>)>,
 }
 
 impl<'a> PartialEq for Window<'a>
@@ -45,7 +47,9 @@ impl<'a> Window<'a>
             .unwrap();
         canvas.set_draw_color(background_color.rgba());
 
-        Window { canvas, background_color, widgets: vec![] }
+        let texture_creator = canvas.texture_creator();
+
+        Window { canvas, texture_creator, background_color, widgets: vec![] }
     }
 
     pub fn set_fullscreen(&mut self, fullscreen: bool)
@@ -92,14 +96,26 @@ impl<'a> Window<'a>
             .map_err(|e| eprintln!("Error: {e}"));
     }
 
-    pub fn add_widget(&mut self, widget_type: WidgetType<'a>)
+    pub fn add_widget(&'a mut self, widget_type: WidgetType<'a>)
     {
-        self.widgets.push(widget_type);
+        let mut textures: Vec<&Texture> = vec![];
+        for surface in &widget_type.raw().surfaces
+        {
+            textures.push(&surface.as_texture(&self.texture_creator).unwrap());
+        }
+
+        self.widgets.push((widget_type, textures));
     }
 
-    pub fn add_button(&mut self, button: &'a Button)
+    pub fn add_button(&'a mut self, button: &'a Button)
     {
-        self.widgets.push(WidgetType::Button(button));
+        let mut textures: Vec<&Texture> = vec![];
+        for surface in &button.raw().surfaces
+        {
+            textures.push(&surface.as_texture(&self.texture_creator).unwrap());
+        }
+
+        self.widgets.push((WidgetType::Button(button), textures));
     }
 
     pub fn draw(&mut self)
@@ -107,13 +123,18 @@ impl<'a> Window<'a>
         self.canvas.set_draw_color(self.background_color.rgb());
         self.canvas.clear();
         // others will be here
-        self.widgets.iter().for_each(|widget_type|{
-            let widget_raw = widget_type.raw();
+        self.widgets.iter().for_each(|widget|{
+            let widget_raw = widget.0.raw();
+            let textures = &widget.1;
 
-            widget_raw.iter().for_each(|rect| {
+            widget_raw.raw.iter().for_each(|rect| {
                 self.canvas.set_draw_color(rect.color.rgba());
                 let rect: sdl2::rect::Rect = rect.into();
                 self.canvas.fill_rect(rect).map_err(|e| eprintln!("Error: {e}"));
+            });
+
+            textures.iter().for_each(|texture| {
+                // texture.
             });
         });
         self.canvas.present();

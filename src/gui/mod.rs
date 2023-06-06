@@ -18,10 +18,12 @@ pub use backends::Backend;
 
 pub struct Sdl;
 impl<'a> Backend<'a> for Sdl {
-    type Application = crate::gui::backends::SdlApplication<'a>;
-    type Window = crate::gui::backends::SdlWindow<'a>;
-    type Widget = crate::gui::backends::SdlWidget;
-    type Button = crate::gui::backends::SdlButton;
+    type Application = backends::SdlApplication<'a>;
+    type Window = backends::SdlWindow<'a>;
+    type Widget = backends::SdlWidget<'a>;
+    type Button = backends::SdlButton<'a>;
+    type FontManager = backends::SdlFontManager<'a>;
+    type Font = backends::SdlFont<'a>;
 }
 
 #[cfg(test)]
@@ -32,9 +34,17 @@ mod test
     #[test]
     fn test_button()
     {
+        let mut font_manager = <Sdl as Backend>::FontManager::init();
+        let font = font_manager.load(
+            "Roboto-Regular",
+            "src/gui/assets/Roboto/Roboto-Regular.ttf",
+            14,
+            Color::BLACK
+        ).unwrap();
+
         let mut app = <Sdl as Backend>::Application::new().unwrap();
         let mut window = <Sdl as Backend>::Window::new(&app, "title", 800, 600, Color::WHITE, WindowFlags::Default);
-        let button = <Sdl as Backend>::Button::new("button".into(), (50, 50).into(), (255, 0, 0).into());
+        let button = <Sdl as Backend>::Button::new("button".into(), (50, 50).into(), (255, 0, 0).into(), &font);
         window.add_button(&button);
 
         app.draw_window(&mut window);
